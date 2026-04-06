@@ -1,6 +1,5 @@
 'use client';
 
-import { AlertTriangle } from 'lucide-react';
 import { useUIStore } from '@/stores/ui.store';
 import {
   AlertDialog,

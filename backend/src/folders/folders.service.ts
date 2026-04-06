@@ -87,25 +87,53 @@ export class FoldersService {
           relations: ['owner'],
         });
 
-    const sharedPermissions = userId
+    const sharedFolderPermissions = userId
       ? await this.permissionRepo.find({
           where: { userId, resourceType: 'folder' },
         })
       : [];
 
     const sharedFolders =
-      sharedPermissions.length > 0
+      sharedFolderPermissions.length > 0
         ? await this.folderRepo
             .createQueryBuilder('folder')
             .leftJoinAndSelect('folder.owner', 'owner')
             .where('folder.id IN (:...ids)', {
-              ids: sharedPermissions.map((p) => p.resourceId),
+              ids: sharedFolderPermissions.map((p) => p.resourceId),
             })
             .orderBy('folder.position', 'ASC')
             .getMany()
         : [];
 
-    return { folders, files, sharedFolders };
+    const sharedFilePermissions = userId
+      ? await this.permissionRepo.find({
+          where: { userId, resourceType: 'file' },
+        })
+      : [];
+
+    const sharedFiles =
+      sharedFilePermissions.length > 0
+        ? await this.fileRepo
+            .createQueryBuilder('file')
+            .leftJoinAndSelect('file.owner', 'owner')
+            .where('file.id IN (:...ids)', {
+              ids: sharedFilePermissions.map((p) => p.resourceId),
+            })
+            .orderBy('file.position', 'ASC')
+            .getMany()
+        : [];
+
+    const enrichedSharedFolders = sharedFolders.map((f) => {
+      const perm = sharedFolderPermissions.find((p) => p.resourceId === f.id);
+      return { ...f, permission: perm?.permission };
+    });
+
+    const enrichedSharedFiles = sharedFiles.map((f) => {
+      const perm = sharedFilePermissions.find((p) => p.resourceId === f.id);
+      return { ...f, permission: perm?.permission };
+    });
+
+    return { folders, files, sharedFolders: enrichedSharedFolders, sharedFiles: enrichedSharedFiles };
   }
 
   async getFolderContents(folderId: string, userId: string | null) {
@@ -148,7 +176,19 @@ export class FoldersService {
           relations: ['owner'],
         });
 
-    return { folder, children, files };
+    let userPermission: 'owner' | 'editor' | 'viewer' = 'viewer';
+    if (userId && folder.ownerId === userId) {
+      userPermission = 'owner';
+    } else if (userId) {
+      const perm = await this.permissionRepo.findOne({
+        where: { resourceType: 'folder', resourceId: folderId, userId },
+      });
+      if (perm) {
+        userPermission = perm.permission;
+      }
+    }
+
+    return { folder, children, files, userPermission };
   }
 
   async update(id: string, dto: UpdateFolderDto, userId: string) {
@@ -163,7 +203,9 @@ export class FoldersService {
   async remove(id: string, userId: string) {
     const folder = await this.folderRepo.findOne({ where: { id } });
     if (!folder) throw new NotFoundException('Folder not found');
-    await this.checkAccess(folder, userId, 'editor');
+    if (folder.ownerId !== userId) {
+      throw new ForbiddenException('Only the owner can delete this folder');
+    }
 
     await this.folderRepo.remove(folder);
     return { message: 'Folder deleted successfully' };
@@ -172,7 +214,9 @@ export class FoldersService {
   async clone(id: string, userId: string) {
     const folder = await this.folderRepo.findOne({ where: { id } });
     if (!folder) throw new NotFoundException('Folder not found');
-    await this.checkAccess(folder, userId, 'viewer');
+    if (!folder.isPublic) {
+      await this.checkAccess(folder, userId, 'viewer');
+    }
 
     return this.cloneFolderRecursive(folder, folder.parentId, userId);
   }

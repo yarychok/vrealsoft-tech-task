@@ -6,6 +6,7 @@ import { Search as SearchIcon } from 'lucide-react';
 import FolderCard from '@/components/FolderCard';
 import FileCard from '@/components/FileCard';
 import { searchApi } from '@/lib/search-api';
+import { useAuthStore } from '@/stores/auth.store';
 import { useFileActions } from '@/hooks/useFileActions';
 import EditModal from '@/components/EditModal';
 import { Folder, FileItem } from '@/types';
@@ -19,8 +20,10 @@ export default function SearchPage() {
   const [query, setQuery] = useState(initialQuery);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [permissionMap, setPermissionMap] = useState<Record<string, 'editor' | 'viewer'>>({});
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const { user } = useAuthStore();
 
   const {
     editingFolder,
@@ -51,6 +54,7 @@ export default function SearchPage() {
       const res = await searchApi.search(query.trim());
       setFolders(res?.folders || []);
       setFiles(res?.files || []);
+      setPermissionMap(res?.permissionMap || {});
     } catch {
       setFolders([]);
       setFiles([]);
@@ -112,9 +116,24 @@ export default function SearchPage() {
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-foreground mb-3">Folders</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {folders.map((f) => (
-                  <FolderCard key={f.id} folder={f} onEdit={handleEditFolder} onDelete={handleDeleteFolder} onClone={handleCloneFolder} onShare={handleShareFolder} />
-                ))}
+                {folders.map((f) => {
+                  const isOwner = f.ownerId === user?.id;
+                  const perm = permissionMap[f.id];
+                  const canEditItem = isOwner || perm === 'editor';
+                  return (
+                    <FolderCard
+                      key={f.id}
+                      folder={f}
+                      onEdit={handleEditFolder}
+                      onDelete={handleDeleteFolder}
+                      onClone={handleCloneFolder}
+                      onShare={handleShareFolder}
+                      showEdit={canEditItem}
+                      showDelete={isOwner}
+                      showShare={isOwner}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -123,16 +142,30 @@ export default function SearchPage() {
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-3">Files</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {files.map((f) => (
-                  <FileCard key={f.id} file={f} onEdit={handleEditFile} onDelete={handleDeleteFile} onClone={handleCloneFile} onShare={handleShareFile} />
-                ))}
+                {files.map((f) => {
+                  const isOwner = f.ownerId === user?.id;
+                  const perm = permissionMap[f.id];
+                  const canEditItem = isOwner || perm === 'editor';
+                  return (
+                    <FileCard
+                      key={f.id}
+                      file={f}
+                      onEdit={handleEditFile}
+                      onDelete={handleDeleteFile}
+                      onClone={handleCloneFile}
+                      onShare={handleShareFile}
+                      showEdit={canEditItem}
+                      showDelete={isOwner}
+                      showShare={isOwner}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
 
           {total === 0 && (
             <div className="text-center py-12">
-              <SearchIcon className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground">No results found.</p>
             </div>
           )}
@@ -141,7 +174,6 @@ export default function SearchPage() {
 
       {!hasSearched && (
         <div className="text-center py-12">
-          <SearchIcon className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
           <p className="text-muted-foreground">Enter a query to search for files and folders.</p>
         </div>
       )}

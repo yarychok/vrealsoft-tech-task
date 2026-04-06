@@ -93,7 +93,9 @@ export class FilesService {
   async remove(id: string, userId: string) {
     const file = await this.fileRepo.findOne({ where: { id } });
     if (!file) throw new NotFoundException('File not found');
-    await this.checkAccess(file, userId, 'editor');
+    if (file.ownerId !== userId) {
+      throw new ForbiddenException('Only the owner can delete this file');
+    }
 
     await this.storageService.deleteFile(file.storagePath);
 
@@ -104,7 +106,9 @@ export class FilesService {
   async clone(id: string, userId: string) {
     const file = await this.fileRepo.findOne({ where: { id } });
     if (!file) throw new NotFoundException('File not found');
-    await this.checkAccess(file, userId, 'viewer');
+    if (!file.isPublic) {
+      await this.checkAccess(file, userId, 'viewer');
+    }
 
     const clone = this.fileRepo.create({
       name: `${file.name} (Copy)`,

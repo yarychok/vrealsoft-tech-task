@@ -68,6 +68,36 @@ export class SearchService {
         .getMany();
     }
 
+    if (folderPermissions.length > 0) {
+      const sharedFolderIds = folderPermissions.map((p) => p.resourceId);
+
+      const filesInSharedFolders = await this.fileRepo
+        .createQueryBuilder('file')
+        .leftJoinAndSelect('file.owner', 'owner')
+        .where('file.folder_id IN (:...folderIds)', { folderIds: sharedFolderIds })
+        .andWhere('file.name ILIKE :query', { query: `%${query}%` })
+        .getMany();
+
+      for (const f of filesInSharedFolders) {
+        if (!sharedFiles.find((sf) => sf.id === f.id) && !files.find((ef) => ef.id === f.id)) {
+          sharedFiles.push(f);
+        }
+      }
+
+      const subfoldersInShared = await this.folderRepo
+        .createQueryBuilder('folder')
+        .leftJoinAndSelect('folder.owner', 'owner')
+        .where('folder.parent_id IN (:...parentIds)', { parentIds: sharedFolderIds })
+        .andWhere('folder.name ILIKE :query', { query: `%${query}%` })
+        .getMany();
+
+      for (const f of subfoldersInShared) {
+        if (!sharedFolders.find((sf) => sf.id === f.id) && !folders.find((ef) => ef.id === f.id)) {
+          sharedFolders.push(f);
+        }
+      }
+    }
+
     const allFolders = [
       ...folders,
       ...sharedFolders.filter((sf) => !folders.find((f) => f.id === sf.id)),
@@ -77,6 +107,24 @@ export class SearchService {
       ...sharedFiles.filter((sf) => !files.find((f) => f.id === sf.id)),
     ];
 
-    return { folders: allFolders, files: allFiles };
+    const permissionMap: Record<string, 'editor' | 'viewer'> = {};
+    for (const p of folderPermissions) {
+      permissionMap[p.resourceId] = p.permission;
+    }
+    for (const p of filePermissions) {
+      permissionMap[p.resourceId] = p.permission;
+    }
+    for (const f of allFiles) {
+      if (!permissionMap[f.id] && f.folderId && permissionMap[f.folderId]) {
+        permissionMap[f.id] = permissionMap[f.folderId];
+      }
+    }
+    for (const f of allFolders) {
+      if (!permissionMap[f.id] && f.parentId && permissionMap[f.parentId]) {
+        permissionMap[f.id] = permissionMap[f.parentId];
+      }
+    }
+
+    return { folders: allFolders, files: allFiles, permissionMap };
   }
 }

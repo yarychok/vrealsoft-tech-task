@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { HardDrive } from 'lucide-react';
 import { authApi } from '@/lib/auth-api';
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
@@ -32,8 +31,7 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <HardDrive className="h-12 w-12 text-primary mx-auto" />
-          <h1 className="text-2xl font-bold text-foreground mt-4">Sign in to VRealSoft</h1>
+          <h1 className="text-2xl font-bold text-foreground">Sign in to VRealSoft</h1>
         </div>
 
         <Card>
@@ -69,6 +67,10 @@ export default function LoginPage() {
           >
             {devLoading ? 'Signing in...' : 'Continue as Dev User'}
           </Button>
+
+          <p className="text-xs text-muted-foreground text-center pt-2">
+            Dev User is for local development only. Deployed environments use Google authentication.
+          </p>
           </CardContent>
         </Card>
       </div>

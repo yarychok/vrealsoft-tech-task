@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Shield, Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { permissionsApi } from '@/lib/permissions-api';
 import { Permission } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ export default function PermissionsPage() {
 
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [email, setEmail] = useState('');
   const [access, setAccess] = useState<'viewer' | 'editor'>('viewer');
   const [entries, setEntries] = useState<{ email: string; permission: 'viewer' | 'editor' }[]>([]);
@@ -27,8 +28,12 @@ export default function PermissionsPage() {
     try {
       const res = await permissionsApi.getForResource(resourceType, resourceId);
       setPermissions(res || []);
-    } catch {
-      toast.error('Failed to load permissions');
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setAccessDenied(true);
+      } else {
+        toast.error('Failed to load permissions');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,10 +97,18 @@ export default function PermissionsPage() {
     return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
   }
 
+  if (accessDenied) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
+        <p className="text-muted-foreground">Only the owner can manage permissions for this resource.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-        <Shield className="h-6 w-6" />
+      <h1 className="text-2xl font-bold text-foreground mb-6">
         Manage Permissions
       </h1>
       <p className="text-sm text-muted-foreground mb-6 capitalize">

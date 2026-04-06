@@ -15,6 +15,7 @@ export interface Folder {
   position: number;
   createdAt: string;
   updatedAt: string;
+  permission?: 'editor' | 'viewer';
 }
 
 export interface FileItem {
@@ -31,6 +32,7 @@ export interface FileItem {
   position: number;
   createdAt: string;
   updatedAt: string;
+  permission?: 'editor' | 'viewer';
 }
 
 export interface Permission {
@@ -64,13 +66,16 @@ export interface FolderContents {
   folders?: Folder[];
   files?: FileItem[];
   sharedFolders?: Folder[];
+  sharedFiles?: FileItem[];
   folder?: Folder;
   children?: Folder[];
+  userPermission?: 'owner' | 'editor' | 'viewer';
 }
 
 export interface SearchResults {
   folders: Folder[];
   files: FileItem[];
+  permissionMap?: Record<string, 'editor' | 'viewer'>;
 }
 
 export interface PermissionEntry {

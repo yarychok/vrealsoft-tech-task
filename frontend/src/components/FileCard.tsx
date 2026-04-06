@@ -31,14 +31,17 @@ import {
 
 interface FileCardProps {
   file: FileItem;
-  onEdit: (file: FileItem) => void;
-  onDelete: (file: FileItem) => void;
-  onClone: (file: FileItem) => void;
-  onShare: (file: FileItem) => void;
+  onEdit?: (file: FileItem) => void;
+  onDelete?: (file: FileItem) => void;
+  onClone?: (file: FileItem) => void;
+  onShare?: (file: FileItem) => void;
   onMoveUp?: (file: FileItem) => void;
   onMoveDown?: (file: FileItem) => void;
   isFirst?: boolean;
   isLast?: boolean;
+  showEdit?: boolean;
+  showDelete?: boolean;
+  showShare?: boolean;
 }
 
 function getFileIcon(mimeType: string) {
@@ -68,6 +71,9 @@ export default function FileCard({
   onMoveDown,
   isFirst,
   isLast,
+  showEdit = false,
+  showDelete = false,
+  showShare = false,
 }: FileCardProps) {
   const handleDownload = () => {
     const url = filesApi.getDownloadUrl(file.id);
@@ -121,22 +127,32 @@ export default function FileCard({
             <DropdownMenuItem onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" /> Download
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(file)}>
-              <Edit className="h-4 w-4 mr-2" /> Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onClone(file)}>
-              <Copy className="h-4 w-4 mr-2" /> Duplicate
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onShare(file)}>
-              <Share2 className="h-4 w-4 mr-2" /> Share
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(file)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
-            </DropdownMenuItem>
+            {showEdit && onEdit && (
+              <DropdownMenuItem onClick={() => onEdit(file)}>
+                <Edit className="h-4 w-4 mr-2" /> Edit
+              </DropdownMenuItem>
+            )}
+            {onClone && (
+              <DropdownMenuItem onClick={() => onClone(file)}>
+                <Copy className="h-4 w-4 mr-2" /> Duplicate
+              </DropdownMenuItem>
+            )}
+            {showShare && onShare && (
+              <DropdownMenuItem onClick={() => onShare(file)}>
+                <Share2 className="h-4 w-4 mr-2" /> Share
+              </DropdownMenuItem>
+            )}
+            {showDelete && onDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete(file)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

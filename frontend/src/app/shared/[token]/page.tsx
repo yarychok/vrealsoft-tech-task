@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { ExternalLink, Folder as FolderIcon, FileText, Download } from 'lucide-react';
+import { Folder as FolderIcon, FileText, Download } from 'lucide-react';
 import { permissionsApi } from '@/lib/permissions-api';
 import { filesApi } from '@/lib/files-api';
 import { Folder, FileItem } from '@/types';
@@ -68,7 +68,6 @@ export default function SharedPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="text-center max-w-md">
           <CardContent className="pt-6">
-            <ExternalLink className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h1 className="text-xl font-semibold text-foreground mb-2">Link Unavailable</h1>
             <p className="text-muted-foreground">{error}</p>
           </CardContent>

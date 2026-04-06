@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Pencil } from 'lucide-react';
 import { foldersApi } from '@/lib/folders-api';
 import { Folder } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -70,8 +69,7 @@ export default function EditFolderPage() {
 
   return (
     <div className="max-w-md mx-auto">
-      <h1 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-        <Pencil className="h-6 w-6" />
+      <h1 className="text-2xl font-bold text-foreground mb-6">
         Edit Folder
       </h1>
 

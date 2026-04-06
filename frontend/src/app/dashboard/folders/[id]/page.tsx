@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FolderPlus, Plus } from 'lucide-react';
 import { useFilesStore } from '@/stores/files.store';
+import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import FolderCard from '@/components/FolderCard';
@@ -16,14 +17,19 @@ export default function FolderPage() {
   const params = useParams();
   const router = useRouter();
   const folderId = params.id as string;
+  const { user } = useAuthStore();
 
   const {
     folders,
     files,
     breadcrumbs,
     isLoading,
+    userPermission,
     loadFolderContents,
   } = useFilesStore();
+
+  const canEdit = userPermission === 'owner' || userPermission === 'editor';
+  const isOwner = userPermission === 'owner';
 
   const {
     editingFolder,
@@ -60,19 +66,21 @@ export default function FolderPage() {
         <div className="flex-1 max-w-md">
           <SearchBar />
         </div>
-        <div className="flex items-center gap-2 ml-4">
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/folders/new?parentId=${folderId}`)}
-          >
-            <FolderPlus className="h-4 w-4 mr-1" />
-            New Folder
-          </Button>
-          <Button onClick={() => router.push(`/upload?folderId=${folderId}`)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Upload
-          </Button>
-        </div>
+        {canEdit && (
+          <div className="flex items-center gap-2 ml-4">
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/folders/new?parentId=${folderId}`)}
+            >
+              <FolderPlus className="h-4 w-4 mr-1" />
+              New Folder
+            </Button>
+            <Button onClick={() => router.push(`/upload?folderId=${folderId}`)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Upload
+            </Button>
+          </div>
+        )}
       </div>
 
       {(editingFolder || editingFile) && (
@@ -95,7 +103,6 @@ export default function FolderPage() {
         <div>
           {folders.length === 0 && files.length === 0 && (
             <div className="text-center py-16">
-              <FolderPlus className="h-16 w-16 text-muted-foreground/30 mx-auto" />
               <h2 className="mt-4 text-lg font-medium text-foreground">This folder is empty</h2>
               <p className="mt-2 text-muted-foreground">Upload files or create a subfolder to get started.</p>
             </div>
@@ -107,20 +114,26 @@ export default function FolderPage() {
                 Folders
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {folders.map((folder, idx) => (
-                  <FolderCard
-                    key={folder.id}
-                    folder={folder}
-                    onEdit={handleEditFolder}
-                    onDelete={handleDeleteFolder}
-                    onClone={handleCloneFolder}
-                    onShare={handleShareFolder}
-                    onMoveUp={handleMoveFolderUp}
-                    onMoveDown={handleMoveFolderDown}
-                    isFirst={idx === 0}
-                    isLast={idx === folders.length - 1}
-                  />
-                ))}
+                {folders.map((folder, idx) => {
+                  const itemIsOwned = folder.ownerId === user?.id;
+                  return (
+                    <FolderCard
+                      key={folder.id}
+                      folder={folder}
+                      onEdit={handleEditFolder}
+                      onDelete={handleDeleteFolder}
+                      onClone={handleCloneFolder}
+                      onShare={handleShareFolder}
+                      onMoveUp={isOwner ? handleMoveFolderUp : undefined}
+                      onMoveDown={isOwner ? handleMoveFolderDown : undefined}
+                      isFirst={idx === 0}
+                      isLast={idx === folders.length - 1}
+                      showEdit={itemIsOwned || canEdit}
+                      showDelete={itemIsOwned}
+                      showShare={itemIsOwned}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}
@@ -131,20 +144,26 @@ export default function FolderPage() {
                 Files
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {files.map((file, idx) => (
-                  <FileCard
-                    key={file.id}
-                    file={file}
-                    onEdit={handleEditFile}
-                    onDelete={handleDeleteFile}
-                    onClone={handleCloneFile}
-                    onShare={handleShareFile}
-                    onMoveUp={handleMoveFileUp}
-                    onMoveDown={handleMoveFileDown}
-                    isFirst={idx === 0}
-                    isLast={idx === files.length - 1}
-                  />
-                ))}
+                {files.map((file, idx) => {
+                  const itemIsOwned = file.ownerId === user?.id;
+                  return (
+                    <FileCard
+                      key={file.id}
+                      file={file}
+                      onEdit={handleEditFile}
+                      onDelete={handleDeleteFile}
+                      onClone={handleCloneFile}
+                      onShare={handleShareFile}
+                      onMoveUp={isOwner ? handleMoveFileUp : undefined}
+                      onMoveDown={isOwner ? handleMoveFileDown : undefined}
+                      isFirst={idx === 0}
+                      isLast={idx === files.length - 1}
+                      showEdit={itemIsOwned || canEdit}
+                      showDelete={itemIsOwned}
+                      showShare={itemIsOwned}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}

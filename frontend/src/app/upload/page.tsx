@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Upload } from 'lucide-react';
 import FileUploadArea from '@/components/FileUploadArea';
 import { useFilesStore } from '@/stores/files.store';
 import { Button } from '@/components/ui/button';
@@ -55,8 +54,7 @@ export default function UploadPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-        <Upload className="h-6 w-6" />
+      <h1 className="text-2xl font-bold text-foreground mb-6">
         Upload Files
       </h1>
 

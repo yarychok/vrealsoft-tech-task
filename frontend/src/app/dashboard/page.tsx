@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FolderPlus, Plus } from 'lucide-react';
 import { useFilesStore } from '@/stores/files.store';
+import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import FolderCard from '@/components/FolderCard';
@@ -14,10 +15,12 @@ import { useFileActions } from '@/hooks/useFileActions';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const {
     folders,
     files,
     sharedFolders,
+    sharedFiles,
     breadcrumbs,
     isLoading,
     loadRootContents,
@@ -91,9 +94,8 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div>
-          {folders.length === 0 && files.length === 0 && sharedFolders.length === 0 && (
+          {folders.length === 0 && files.length === 0 && sharedFolders.length === 0 && sharedFiles.length === 0 && (
             <div className="text-center py-16">
-              <FolderPlus className="h-16 w-16 text-muted-foreground/30 mx-auto" />
               <h2 className="mt-4 text-lg font-medium text-foreground">No files yet</h2>
               <p className="mt-2 text-muted-foreground">Upload files or create a folder to get started.</p>
             </div>
@@ -105,25 +107,31 @@ export default function DashboardPage() {
                 Folders
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {folders.map((folder, idx) => (
-                  <FolderCard
-                    key={folder.id}
-                    folder={folder}
-                    onEdit={handleEditFolder}
-                    onDelete={handleDeleteFolder}
-                    onClone={handleCloneFolder}
-                    onShare={handleShareFolder}
-                    onMoveUp={handleMoveFolderUp}
-                    onMoveDown={handleMoveFolderDown}
-                    isFirst={idx === 0}
-                    isLast={idx === folders.length - 1}
-                  />
-                ))}
+                {folders.map((folder, idx) => {
+                  const isOwner = folder.ownerId === user?.id;
+                  return (
+                    <FolderCard
+                      key={folder.id}
+                      folder={folder}
+                      onEdit={handleEditFolder}
+                      onDelete={handleDeleteFolder}
+                      onClone={handleCloneFolder}
+                      onShare={handleShareFolder}
+                      onMoveUp={isOwner ? handleMoveFolderUp : undefined}
+                      onMoveDown={isOwner ? handleMoveFolderDown : undefined}
+                      isFirst={idx === 0}
+                      isLast={idx === folders.length - 1}
+                      showEdit={isOwner}
+                      showDelete={isOwner}
+                      showShare={isOwner}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}
 
-          {sharedFolders.length > 0 && (
+          {(sharedFolders.length > 0 || sharedFiles.length > 0) && (
             <section className="mb-8">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase mb-3">
                 Shared with me
@@ -134,9 +142,17 @@ export default function DashboardPage() {
                     key={folder.id}
                     folder={folder}
                     onEdit={handleEditFolder}
-                    onDelete={handleDeleteFolder}
                     onClone={handleCloneFolder}
-                    onShare={handleShareFolder}
+                    showEdit={folder.permission === 'editor'}
+                  />
+                ))}
+                {sharedFiles.map((file) => (
+                  <FileCard
+                    key={file.id}
+                    file={file}
+                    onEdit={handleEditFile}
+                    onClone={handleCloneFile}
+                    showEdit={file.permission === 'editor'}
                   />
                 ))}
               </div>
@@ -149,20 +165,26 @@ export default function DashboardPage() {
                 Files
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {files.map((file, idx) => (
-                  <FileCard
-                    key={file.id}
-                    file={file}
-                    onEdit={handleEditFile}
-                    onDelete={handleDeleteFile}
-                    onClone={handleCloneFile}
-                    onShare={handleShareFile}
-                    onMoveUp={handleMoveFileUp}
-                    onMoveDown={handleMoveFileDown}
-                    isFirst={idx === 0}
-                    isLast={idx === files.length - 1}
-                  />
-                ))}
+                {files.map((file, idx) => {
+                  const isOwner = file.ownerId === user?.id;
+                  return (
+                    <FileCard
+                      key={file.id}
+                      file={file}
+                      onEdit={handleEditFile}
+                      onDelete={handleDeleteFile}
+                      onClone={handleCloneFile}
+                      onShare={handleShareFile}
+                      onMoveUp={isOwner ? handleMoveFileUp : undefined}
+                      onMoveDown={isOwner ? handleMoveFileDown : undefined}
+                      isFirst={idx === 0}
+                      isLast={idx === files.length - 1}
+                      showEdit={isOwner}
+                      showDelete={isOwner}
+                      showShare={isOwner}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}

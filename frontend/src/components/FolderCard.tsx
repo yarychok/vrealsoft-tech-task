@@ -26,14 +26,17 @@ import {
 
 interface FolderCardProps {
   folder: Folder;
-  onEdit: (folder: Folder) => void;
-  onDelete: (folder: Folder) => void;
-  onClone: (folder: Folder) => void;
-  onShare: (folder: Folder) => void;
+  onEdit?: (folder: Folder) => void;
+  onDelete?: (folder: Folder) => void;
+  onClone?: (folder: Folder) => void;
+  onShare?: (folder: Folder) => void;
   onMoveUp?: (folder: Folder) => void;
   onMoveDown?: (folder: Folder) => void;
   isFirst?: boolean;
   isLast?: boolean;
+  showEdit?: boolean;
+  showDelete?: boolean;
+  showShare?: boolean;
 }
 
 export default function FolderCard({
@@ -46,6 +49,9 @@ export default function FolderCard({
   onMoveDown,
   isFirst,
   isLast,
+  showEdit = false,
+  showDelete = false,
+  showShare = false,
 }: FolderCardProps) {
   return (
     <Card className="group hover:shadow-md transition-shadow p-4">
@@ -98,22 +104,32 @@ export default function FolderCard({
               </DropdownMenuItem>
             )}
             {(onMoveUp || onMoveDown) && (!isFirst || !isLast) && <DropdownMenuSeparator />}
-            <DropdownMenuItem onClick={() => onEdit(folder)}>
-              <Edit className="h-4 w-4 mr-2" /> Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onClone(folder)}>
-              <Copy className="h-4 w-4 mr-2" /> Duplicate
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onShare(folder)}>
-              <Share2 className="h-4 w-4 mr-2" /> Share
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(folder)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
-            </DropdownMenuItem>
+            {showEdit && onEdit && (
+              <DropdownMenuItem onClick={() => onEdit(folder)}>
+                <Edit className="h-4 w-4 mr-2" /> Rename
+              </DropdownMenuItem>
+            )}
+            {onClone && (
+              <DropdownMenuItem onClick={() => onClone(folder)}>
+                <Copy className="h-4 w-4 mr-2" /> Duplicate
+              </DropdownMenuItem>
+            )}
+            {showShare && onShare && (
+              <DropdownMenuItem onClick={() => onShare(folder)}>
+                <Share2 className="h-4 w-4 mr-2" /> Share
+              </DropdownMenuItem>
+            )}
+            {showDelete && onDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete(folder)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

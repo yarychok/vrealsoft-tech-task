@@ -7,7 +7,9 @@ interface FilesState {
   folders: Folder[];
   files: FileItem[];
   sharedFolders: Folder[];
+  sharedFiles: FileItem[];
   currentFolder: Folder | null;
+  userPermission: 'owner' | 'editor' | 'viewer' | null;
   breadcrumbs: Breadcrumb[];
   isLoading: boolean;
   error: string | null;
@@ -32,7 +34,9 @@ export const useFilesStore = create<FilesState>((set, get) => ({
   folders: [],
   files: [],
   sharedFolders: [],
+  sharedFiles: [],
   currentFolder: null,
+  userPermission: null,
   breadcrumbs: [],
   isLoading: false,
   error: null,
@@ -45,7 +49,9 @@ export const useFilesStore = create<FilesState>((set, get) => ({
         folders: data.folders || [],
         files: data.files || [],
         sharedFolders: data.sharedFolders || [],
+        sharedFiles: data.sharedFiles || [],
         currentFolder: null,
+        userPermission: null,
         breadcrumbs: [],
         isLoading: false,
       });
@@ -63,6 +69,8 @@ export const useFilesStore = create<FilesState>((set, get) => ({
         folders: data.children || [],
         files: data.files || [],
         sharedFolders: [],
+        sharedFiles: [],
+        userPermission: data.userPermission || null,
         isLoading: false,
       });
       get().loadBreadcrumbs(folderId);
