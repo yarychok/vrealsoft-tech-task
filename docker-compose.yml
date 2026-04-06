@@ -22,7 +22,7 @@ services:
       NODE_ENV: development
       PORT: 4000
       DATABASE_URL: postgresql://vrealsoft:vrealsoft_secret@postgres:5432/vrealsoft
-      JWT_SECRET: ${JWT_SECRET:-6o5UAI8dD9vbsQPotGWn7KOn3iuRzF}
+      JWT_SECRET: ${JWT_SECRET:-}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-7d}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
